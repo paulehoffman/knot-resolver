@@ -635,6 +635,10 @@ static int process_answer(knot_pkt_t *pkt, struct kr_request *req)
 			if (state != kr_ok()) {
 				return state;
 			}
+		} else if ((query->flags & QUERY_FORWARD) &&
+			   (query->stype == KNOT_RRTYPE_DS)) {
+			/* Answer for DS subquery. */
+			return KR_STATE_DONE;
 		}
 		VERBOSE_MSG("<= cname chain, following\n");
 		/* Check if the same query was followed in the same CNAME chain. */
