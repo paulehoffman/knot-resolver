@@ -636,8 +636,10 @@ static int process_answer(knot_pkt_t *pkt, struct kr_request *req)
 				return state;
 			}
 		} else if ((query->flags & QUERY_FORWARD) &&
-			   (query->stype == KNOT_RRTYPE_DS)) {
-			/* Answer for DS subquery. */
+			   ((query->stype == KNOT_RRTYPE_DS) ||
+			    (query->stype == KNOT_RRTYPE_NS))) {
+			/* CNAME'ed answer for DS or NS subquery.
+			 * Treat it as proof of zonecut nonexistance. */
 			return KR_STATE_DONE;
 		}
 		VERBOSE_MSG("<= cname chain, following\n");
