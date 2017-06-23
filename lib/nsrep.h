@@ -108,6 +108,15 @@ KR_EXPORT
 int kr_nsrep_elect(struct kr_query *qry, struct kr_context *ctx);
 
 /**
+ * Elect address with minimal rtt within current query nsrep list
+ * @note   ns reputation is zeroed
+ * @param  qry          updated query
+ * @return              0 or an error code
+ */
+KR_EXPORT
+int kr_nsrep_elect_min_rtt(struct kr_query *qry);
+
+/**
  * Elect best nameserver/address pair from the nsset.
  * @param  qry          updated query
  * @param  ctx          resolution context

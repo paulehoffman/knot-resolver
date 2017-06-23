@@ -240,6 +240,45 @@ int kr_nsrep_elect(struct kr_query *qry, struct kr_context *ctx)
 	return map_walk(&qry->zone_cut.nsset, eval_nsrep, qry);
 }
 
+int kr_nsrep_elect_min_rtt(struct kr_query *qry)
+{
+	/* TODO - sorting instead of searching minimum? */
+	struct kr_nsrep *ns = &qry->ns;
+
+	if (ns->addr[0].ip.sa_family == AF_UNSPEC) {
+		return kr_error(EINVAL);
+	}
+
+	if (ns->addr[1].ip.sa_family == AF_UNSPEC) {
+		/* We have only one entry here, do nothing */
+		return kr_ok();
+	}
+
+	const struct kr_context *ctx = ns->ctx;
+	if (!ctx) {
+		return kr_ok();
+	}
+
+	ns->score = KR_NS_MAX_SCORE + 1;
+	ns->reputation = 0;
+	int i = 1;
+	const struct sockaddr *sock = (const struct sockaddr *)(&ns->addr[i]);
+	do {
+		unsigned *score = lru_get_try(ctx->cache_rtt,
+					      kr_inaddr(sock),
+					      kr_family_len(sock->sa_family));
+		if (score && *score < qry->ns.score) {
+			union inaddr temp_addr = ns->addr[0];
+			ns->addr[0] = ns->addr[i];
+			ns->addr[i] = temp_addr;
+			ns->score = *score;
+		}
+		sock = (const struct sockaddr *)(&ns->addr[++i]);
+	} while ((i < KR_NSREP_MAXADDR) && (sock->sa_family != AF_UNSPEC));
+
+	return kr_ok();
+}
+
 int kr_nsrep_elect_addr(struct kr_query *qry, struct kr_context *ctx)
 {
 	if (!qry || !ctx) {
@@ -330,8 +369,6 @@ int kr_nsrep_copy_set(struct kr_nsrep *dst, const struct kr_nsrep *src)
 
 	memcpy(dst, src, sizeof(struct kr_nsrep));
 	dst->name = (const uint8_t *)"";
-	dst->score = KR_NS_UNKNOWN;
-	dst->reputation = 0;
 
 	return kr_ok();
 }
