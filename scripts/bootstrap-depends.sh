@@ -165,6 +165,7 @@ fi
 
 pkg libknot ${KNOT_URL} ${KNOT_TAG} include/libknot \
 	--disable-static --with-lmdb=no --disable-fastparser --disable-daemon --disable-utilities --disable-documentation
+set -x
 pkg fstrm ${FSTRM_URL} ${FSTRM_VER} include/fstrm.h
 
 # development releases of luajit do NOT install bin/luajit
